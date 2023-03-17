@@ -1,7 +1,6 @@
-import datetime
-
 import requests
 from decouple import config
+from django.core.cache import cache
 from django.http import HttpResponse
 from requests_oauthlib import OAuth2Session
 from rest_framework.exceptions import AuthenticationFailed
@@ -36,8 +35,10 @@ class RedirectURIView(APIView):
                 code=code,
                 client_secret=config("YAHOO_CLIENT_SECRET"),
             )
-            request.session["yahoo_access_token"] = token["access_token"]
-            request.session["yahoo_refresh_token"] = token["refresh_token"]
+            cache.set(
+                "access_token", token["access_token"], timeout=3600
+            )  # 1 hour in ms
+            cache.set("refresh_token", token["refresh_token"], timeout=None)
 
             return HttpResponse(
                 """
@@ -52,25 +53,23 @@ class RedirectURIView(APIView):
 
 class RefreshTokenView(APIView):
     def get(self, request):
-        if request.session.get("yahoo_refresh_token"):
+        if cache.ttl("access_token") <= 0 and cache.get("refresh_token"):
             token = yahoo_oauth.fetch_token(
                 "https://api.login.yahoo.com/oauth2/get_token",
                 authorization_response=redirect_uri,
-                refresh_token=request.session.get("yahoo_refresh_token"),
+                refresh_token=cache.get("refresh_token"),
                 client_secret=config("YAHOO_CLIENT_SECRET"),
             )
-            request.session["yahoo_access_token"] = token["access_token"]
-            request.session["yahoo_refresh_token"] = token["refresh_token"]
-            request.session[
-                "refresh_time"
-            ] = datetime.datetime.now() + datetime.timedelta(seconds=3600)
-            return Response(status=200)
-        return Response(data=AuthenticationFailed)
+            cache.set(
+                "access_token", token["access_token"], timeout=3600
+            )  # 1 hour in ms
+            cache.set("refresh_token", token["refresh_token"], timeout=None)
+            return Response(True)
+        return Response(False)
 
 
 class CheckLoggedInView(APIView):
     def get(self, request):
-        return Response(
-            bool(request.session.get("yahoo_access_token"))
-            or bool(request.session.get("yahoo_refresh_token"))
-        )
+        if cache.get("access_token") or cache.get("refresh_token"):
+            return Response(True)
+        return Response(False)
