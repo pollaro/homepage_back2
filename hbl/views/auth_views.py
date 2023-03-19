@@ -17,6 +17,20 @@ yahoo_oauth = OAuth2Session(
 )
 
 
+def refresh_token():
+    if cache.ttl("access_token") <= 0 and cache.get("refresh_token"):
+        token = yahoo_oauth.fetch_token(
+            "https://api.login.yahoo.com/oauth2/get_token",
+            authorization_response=redirect_uri,
+            refresh_token=cache.get("refresh_token"),
+            client_secret=config("YAHOO_CLIENT_SECRET"),
+        )
+        cache.set("access_token", token["access_token"], timeout=3600)  # 1 hour in ms
+        cache.set("refresh_token", token["refresh_token"], timeout=None)
+        return Response(True)
+    return Response(False)
+
+
 class OauthView(APIView):
     def post(self, request):
         auth_url, state = yahoo_oauth.authorization_url(
@@ -53,23 +67,16 @@ class RedirectURIView(APIView):
 
 class RefreshTokenView(APIView):
     def get(self, request):
-        if cache.ttl("access_token") <= 0 and cache.get("refresh_token"):
-            token = yahoo_oauth.fetch_token(
-                "https://api.login.yahoo.com/oauth2/get_token",
-                authorization_response=redirect_uri,
-                refresh_token=cache.get("refresh_token"),
-                client_secret=config("YAHOO_CLIENT_SECRET"),
-            )
-            cache.set(
-                "access_token", token["access_token"], timeout=3600
-            )  # 1 hour in ms
-            cache.set("refresh_token", token["refresh_token"], timeout=None)
-            return Response(True)
-        return Response(False)
+        return refresh_token()
 
 
 class CheckLoggedInView(APIView):
     def get(self, request):
-        if cache.get("access_token") or cache.get("refresh_token"):
-            return Response(True)
+        if cache.get("access_token"):
+            if cache.ttl("access_token") > 0:
+                return Response(True)
+            elif cache.ttl("access_token") <= 0 and cache.get("refresh_token"):
+                return refresh_token()
+        elif cache.get("refresh_token"):
+            return refresh_token()
         return Response(False)
