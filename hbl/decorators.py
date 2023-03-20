@@ -7,6 +7,10 @@ from hbl.views.auth_views import refresh_token
 
 
 def auth_required(view, redirect_url="/hbl"):
+    """
+    This wrapper will check authorization for restricted views in hbl that require yahoo auth
+    """
+
     @functools.wraps(view)
     def wrapper_auth_required(request, *args, **kwargs):
         if not cache.get("access_token"):
