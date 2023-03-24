@@ -8,5 +8,5 @@ class HBLTeam(models.Model):
     name = models.CharField(max_length=64)
     yahoo_team_key = models.CharField(max_length=20)
     manager = models.ForeignKey(
-        HBLManager, related_name="team", on_delete=models.SET_NULL
+        HBLManager, related_name="team", on_delete=models.SET_NULL, null=True
     )

@@ -4,10 +4,13 @@ import requests
 import xmltodict
 from decouple import config
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from rest_framework.views import APIView
 
 from hbl.decorators import auth_required
+from hbl.models import HBLTeam
+from hbl.serializers import ManagerSerializer, TeamSerializer
 
 
 class TeamsView(APIView):
@@ -21,9 +24,25 @@ class TeamsView(APIView):
             f"{config('YAHOO_LEAGUE_API')}league/{config('HBL_2023_ID')}/teams",
             headers={"Authorization": f'Bearer {cache.get("access_token")}'},
         )
-        response_json = xmltodict.parse(response_xml.text)
-        league = response_json["fantasy_content"]["league"]
-        return HttpResponse(json.dumps(league["teams"]["team"]))
+        response_dict = xmltodict.parse(response_xml.text)
+        league = response_dict["fantasy_content"]["league"]["teams"]["team"]
+        hbl_team_updates = []
+        for team in league:
+            try:
+                hbl_team = HBLTeam.objects.get(team_id=team["team_id"])
+            except ObjectDoesNotExist:
+                manager = {
+                    "hbl_id": team["managers"]["manager"]["manager_id"],
+                    "name": team["managers"]["manager"]["nickname"],
+                }
+                team["manager"] = manager
+            team["yahoo_team_key"] = team["team_key"]
+            hbl_team_updates.append(team)
+        serializer = TeamSerializer(data=hbl_team_updates, many=True)
+        serializer.is_valid()
+        serializer.save()
+
+        return HttpResponse(json.dumps(league))
 
 
 class TeamDetailView(APIView):
@@ -33,5 +52,5 @@ class TeamDetailView(APIView):
             f'{config("YAHOO_LEAGUE_API")}team/{config("HBL_2023_ID")}.t.{team_id}',
             headers={"Authorization": f"Bearer {cache.get('access_token')}"},
         )
-        response_json = xmltodict.parse(response_xml.text)
-        return HttpResponse(json.dumps(response_json["fantasy_content"]["team"]))
+        response_dict = xmltodict.parse(response_xml.text)
+        return HttpResponse(json.dumps(response_dict["fantasy_content"]["team"]))
