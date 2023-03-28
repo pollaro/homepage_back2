@@ -44,4 +44,4 @@ class TeamRosterView(APIView):
         serializer.is_valid()
         serializer.save()
 
-        return Response(serializer.data)
+        return Response(json.dumps(serializer.data))
