@@ -5,12 +5,12 @@ import xmltodict
 from decouple import config
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from hbl.models import HBLPlayer, HBLTeam
-from hbl.serializers import PlayerSerializer
+from hbl.models import HBLPlayer, HBLProspect, HBLTeam
+from hbl.serializers import PlayerSerializer, ProspectSerializer
 
 
 class TeamRosterView(APIView):
@@ -43,5 +43,17 @@ class TeamRosterView(APIView):
         serializer = PlayerSerializer(data=player_updates, many=True)
         serializer.is_valid()
         serializer.save()
+
+        return Response(json.dumps(serializer.data))
+
+
+class ProspectRosterView(APIView):
+    def get(self, request, team_id=""):
+        if team_id:
+            prospects = HBLProspect.objects.filter(hbl_team_id=team_id)
+        else:
+            prospects = HBLProspect.objects.all()
+
+        serializer = ProspectSerializer(prospects, many=True)
 
         return Response(json.dumps(serializer.data))
