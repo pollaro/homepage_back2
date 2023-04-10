@@ -8,11 +8,11 @@ class HBLTeamAbbreviations(aenum.Enum):
     _init_ = "value string"
 
     ARGON_CONCLUSIONS = "AC", "Argon Conclusions"
-    BOTTOM_OF_THE_LINEUP_CARD = "BotLC", "Back of the Lineup Card"
+    BOTTOM_OF_THE_LINEUP_CARD = "BotLC", "Bottom of the Lineup Card"
     CVILLE_STRANGERS = "CS", "C-ville Strangers"
     DIGITAL_SPACE_LOOP = "DSL", "Digital Space Loop"
     JAY_AND_BOBS_BOYS = "JBB", "Jay and Bobs Boys"
-    JIM_WOHLFORD_CLONES = "JWC", "Jim Wohlford's Clones"
+    JIM_WOHLFORD_CLONES = "JWC", "Jim Wohlford Clones"
     LITTLE_GIANTS_II = "LGII", "Little Giants II"
     MGS_WONDERBOYS = "MGWB", "MG's WonderBoys"
     THE_STORAGE_JARS = "SJ", "THE STORAGE JARS"

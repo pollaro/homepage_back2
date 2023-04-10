@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from hbl.models import HBLManager, HBLTeam
+from hbl.models import HBLManager, HBLTeam, HBLTeamAbbreviations
 from hbl.models.players import HBLPlayer, HBLProspect
 
 
@@ -12,6 +12,7 @@ class ManagerSerializer(serializers.ModelSerializer):
 
 class TeamSerializer(serializers.ModelSerializer):
     manager = ManagerSerializer()
+    name = serializers.ChoiceField(choices=HBLTeamAbbreviations.choices())
 
     class Meta:
         model = HBLTeam
