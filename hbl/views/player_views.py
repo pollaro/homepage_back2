@@ -5,12 +5,13 @@ import xmltodict
 from decouple import config
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse, JsonResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from hbl.models import HBLPlayer, HBLProspect, HBLTeam
+from hbl.mlb_teams import MLBTeams
+from hbl.models import HBLManager, HBLPlayer, HBLProspect, HBLTeam
 from hbl.serializers import PlayerSerializer, ProspectSerializer
+from hbl.views.auth_views import get_user
 
 
 class TeamRosterView(APIView):
@@ -52,8 +53,67 @@ class ProspectRosterView(APIView):
         if team_id:
             prospects = HBLProspect.objects.filter(hbl_team_id=team_id)
         else:
-            prospects = HBLProspect.objects.all()
+            prospects = HBLProspect.objects.filter(hbl_team__null=False)
 
         serializer = ProspectSerializer(prospects, many=True)
 
         return Response(json.dumps(serializer.data))
+
+
+class ProspectAddView(APIView):
+    def post(self, request):
+        first_name = request.data.get("first_name")
+        last_name = request.data.get("last_name")
+        mlb_team = request.data.get("mlb_team")
+        position = request.data.get("position")
+        if first_name and last_name and mlb_team:
+            prospect_in_db = HBLProspect.objects.filter(
+                first_name=first_name, last_name=last_name, team_name=mlb_team
+            )
+            if prospect_in_db and prospect_in_db.count() == 1:
+                prospect_in_db = prospect_in_db.get()
+                prospect_in_db.position = position
+            elif not prospect_in_db:
+                prospect_in_db = HBLProspect(
+                    first_name=first_name,
+                    last_name=last_name,
+                    team_name=mlb_team,
+                    primary_position=position,
+                )
+            else:
+                return Response("Too many prospects found", status=400)
+            team = HBLTeam.objects.get(manager__guid=get_user())
+            if team is None:
+                return Response("No HBLTeam found", status=400)
+            prospect_in_db.hbl_team = team
+            prospect_in_db.save()
+            return Response(
+                f"Prospect {first_name} {last_name} {mlb_team}-{position} added to {team.name}",
+                status=200,
+            )
+
+        return Response("No first name, last name, or MLB team provided", status=400)
+
+
+class ProspectRemoveView(APIView):
+    def post(self, request):
+        first_name = request.data.get("first_name")
+        last_name = request.data.get("last_name")
+        mlb_team = request.data.get("mlb_team")
+        position = request.data.get("position")
+        if first_name and last_name and mlb_team:
+            prospect_in_db = HBLProspect.objects.filter(
+                first_name=first_name, last_name=last_name, team_name=mlb_team
+            )
+            if prospect_in_db and prospect_in_db.count() == 1:
+                prospect_in_db = prospect_in_db.get()
+                team = prospect_in_db.hbl_team
+                prospect_in_db.hbl_team = None
+                prospect_in_db.save()
+                return Response(
+                    f"Prospect {first_name} {last_name} was dropped from {team}",
+                    status=200,
+                )
+            else:
+                return Response("No Prospect Found", status=400)
+        return Response("No first name, last name, or MLB team provided", status=400)

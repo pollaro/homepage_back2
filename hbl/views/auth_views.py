@@ -1,4 +1,5 @@
 import requests
+import xmltodict
 from decouple import config
 from django.core.cache import cache
 from django.http import HttpResponse
@@ -35,6 +36,17 @@ def refresh_token():
         cache.set("refresh_token", token.json()["refresh_token"], timeout=None)
         return Response(True)
     return Response(False)
+
+
+def get_user():
+    if cache.get("access_token"):
+        user_guid_xml = requests.get(
+            f'{config("YAHOO_LEAGUE_API")}users;use_login=1',
+            headers={"Authorization": f"Bearer {cache.get('access_token')}"},
+        )
+        response_dict = xmltodict.parse(user_guid_xml.text)
+        return response_dict["fantasy_content"]["users"]["user"]["guid"]
+    return None
 
 
 class OauthView(APIView):
@@ -102,3 +114,8 @@ class CheckLoggedInView(APIView):
         elif cache.get("refresh_token"):
             return refresh_token()
         return Response(False)
+
+
+class GetUserView(APIView):
+    def get(self, request):
+        return Response(get_user())
