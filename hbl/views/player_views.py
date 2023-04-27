@@ -53,7 +53,7 @@ class ProspectRosterView(APIView):
         if team_id:
             prospects = HBLProspect.objects.filter(hbl_team_id=team_id)
         else:
-            prospects = HBLProspect.objects.filter(hbl_team__null=False)
+            prospects = HBLProspect.objects.filter(hbl_team__isnull=False)
 
         serializer = ProspectSerializer(prospects, many=True)
 
@@ -88,7 +88,10 @@ class ProspectAddView(APIView):
             prospect_in_db.hbl_team = team
             prospect_in_db.save()
             return Response(
-                f"Prospect {first_name} {last_name} {mlb_team}-{position} added to {team.name}",
+                {
+                    "msg": f"Prospect {first_name} {last_name} {mlb_team}-{position} added to {team.name}",
+                    "hbl_team": {"id": team.id, "name": team.name},
+                },
                 status=200,
             )
 
@@ -111,7 +114,10 @@ class ProspectRemoveView(APIView):
                 prospect_in_db.hbl_team = None
                 prospect_in_db.save()
                 return Response(
-                    f"Prospect {first_name} {last_name} was dropped from {team}",
+                    {
+                        "msg": f"Prospect {first_name} {last_name} was dropped from {team.name}",
+                        "hbl_team": {"id": team.id, "name": team.name},
+                    },
                     status=200,
                 )
             else:
