@@ -36,6 +36,7 @@ class HBLPlayer(models.Model):
     keeper_cost_current = models.IntegerField(default=0)
     keeper_cost_next = models.IntegerField(default=1)
     seasons_on_team = models.IntegerField(default=0)
+    four_keeper_cost = models.BooleanField(default=False)
 
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
