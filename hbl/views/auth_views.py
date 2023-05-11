@@ -1,16 +1,16 @@
 import requests
 import xmltodict
 from decouple import config
+from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse
 from requests_oauthlib import OAuth2Session
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 redirect_uri = (
     config("YAHOO_REDIRECT_URI_DEBUG")
-    if config("DEBUG")
+    if settings.DEBUG
     else config("YAHOO_REDIRECT_URI")
 )
 yahoo_oauth = OAuth2Session(
