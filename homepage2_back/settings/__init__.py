@@ -109,7 +109,6 @@ LOGGING = {
     },
 }
 
-
 WSGI_APPLICATION = "homepage2_back.wsgi.application"
 
 
