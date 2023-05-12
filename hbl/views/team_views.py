@@ -13,7 +13,7 @@ from hbl.decorators import auth_required
 from hbl.models import HBLTeam
 from hbl.serializers import TeamSerializer
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger("django")
 
 
 class TeamsView(APIView):
@@ -23,6 +23,7 @@ class TeamsView(APIView):
 
     @auth_required
     def get(self, request):
+        logger.info("Get HBL Teams")
         response_xml = requests.get(
             f"{config('YAHOO_LEAGUE_API')}league/{config('HBL_2023_ID')}/teams",
             headers={"Authorization": f'Bearer {cache.get("access_token")}'},
