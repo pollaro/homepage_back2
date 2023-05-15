@@ -87,17 +87,17 @@ TEMPLATES = [
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "root": {"level": "INFO", "handlers": ["file"]},
+    "root": {"level": "DEBUG", "handlers": ["file"]},
     "handlers": {
         "file": {
-            "level": "INFO",
+            "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": "/var/log/django.log",
+            "filename": "django.log",
             "formatter": "app",
         },
     },
     "loggers": {
-        "django": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "": {"handlers": ["file"], "level": "DEBUG", "propagate": True},
     },
     "formatters": {
         "app": {

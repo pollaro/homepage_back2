@@ -13,7 +13,7 @@ from hbl.decorators import auth_required
 from hbl.models import HBLTeam
 from hbl.serializers import TeamSerializer
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class TeamsView(APIView):

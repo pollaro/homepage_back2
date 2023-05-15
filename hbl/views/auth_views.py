@@ -1,3 +1,5 @@
+import logging
+
 import requests
 import xmltodict
 from decouple import config
@@ -7,6 +9,8 @@ from django.http import HttpResponse
 from requests_oauthlib import OAuth2Session
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 redirect_uri = (
     config("YAHOO_REDIRECT_URI_DEBUG")
@@ -106,6 +110,7 @@ class CheckLoggedInView(APIView):
     """
 
     def get(self, request):
+        logger.info(f"Debug setting is {settings.DEBUG}")
         if cache.get("access_token"):
             if cache.ttl("access_token") > 0:
                 return Response(True)
