@@ -1,6 +1,14 @@
+from collections import defaultdict
+
 from rest_framework import serializers
 
-from hbl.models import HBLManager, HBLTeam, HBLTeamAbbreviations
+from hbl.models import (
+    HBLManager,
+    HBLTeam,
+    HBLTeamAbbreviations,
+    HBLTransaction,
+    TransactionType,
+)
 from hbl.models.players import HBLPlayer, HBLProspect
 
 
@@ -47,4 +55,18 @@ class ProspectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = HBLProspect
+        fields = "__all__"
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    yahoo_id = serializers.IntegerField(source="transaction_id")
+    type = serializers.ChoiceField(choices=TransactionType.choices)
+    player = PlayerSerializer(many=True)
+    team = TeamSerializer()
+    related_transaction = serializers.PrimaryKeyRelatedField(
+        queryset=HBLTransaction.objects.all()
+    )
+
+    class Meta:
+        model = HBLTransaction
         fields = "__all__"

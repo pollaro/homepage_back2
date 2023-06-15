@@ -8,8 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from hbl.mlb_teams import MLBTeams
-from hbl.models import HBLManager, HBLPlayer, HBLProspect, HBLTeam
+from hbl.models import HBLPlayer, HBLProspect, HBLTeam
 from hbl.serializers import PlayerSerializer, ProspectSerializer
 from hbl.views.auth_views import get_user
 
